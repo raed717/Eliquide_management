@@ -17,7 +17,6 @@ The **Space Vape Application** is a Python-based desktop application built using
 - **User Interface**:
   - Tabbed interface with sections for calculator and history.
   - Interactive widgets like buttons, tables, and inputs.
-  - Dynamic logo display (if `assets/logo.png` exists).
 
 ## Requirements
 
