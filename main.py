@@ -8,7 +8,6 @@ import os
 
 # Constants
 BASE_VOLUME = 30
-PACKAGING_COST = 1
 MAX_IMAGE_WIDTH = 250
 MAX_IMAGE_HEIGHT = 200
 HISTORY_FILE = "history.json"
@@ -53,6 +52,7 @@ class SpaceVapeApp:
         input_fields = [
             ("Prix 30ML arome (DT):", "30", "prix_arome"),
             ("Prix 1L base (DT):", "60", "prix_base"),
+            ("Cout emballage:", "0.8", "PACKAGING_COST"),
             ("Quantité d'arome (ml):", "30", "arome"),
             ("Pourcentage d'arome (%):", "10", "P_arome"),
             ("Prix de vente de 30ml (DT):", "15", "prix_vente"),
@@ -90,6 +90,10 @@ class SpaceVapeApp:
             self.history_table.column(col, anchor="center")
         self.history_table.pack(fill=tk.BOTH, pady=10)
 
+        # Total Profits Label
+        self.total_profits_label = ttk.Label(self.history_frame, text="Total Profits: 0.00 DT", font=("Arial", 12, "bold"))
+        self.total_profits_label.pack(pady=5, anchor="e")  # Align to the right
+
         # Populate History Table
         self.populate_history_table()
 
@@ -119,6 +123,7 @@ class SpaceVapeApp:
             P_arome = float(self.inputs["P_arome"].get())
             prix_vente = float(self.inputs["prix_vente"].get())
             prix_base = float(self.inputs["prix_base"].get()) / 1000
+            PACKAGING_COST = float(self.inputs["PACKAGING_COST"].get())
             prix_arome = float(self.inputs["prix_arome"].get()) / BASE_VOLUME
 
             # Calculations
@@ -126,7 +131,7 @@ class SpaceVapeApp:
             total_liquid = base_ajoute + arome
             nbr_flacon = total_liquid / BASE_VOLUME
             charge_liquide = base_ajoute * prix_base + prix_arome * arome
-            profits = prix_vente * nbr_flacon - (charge_liquide + nbr_flacon * PACKAGING_COST)
+            profits = prix_vente * int(nbr_flacon) - (charge_liquide + int(nbr_flacon) * PACKAGING_COST)
 
             # Display Results
             self.results_table.delete(*self.results_table.get_children())
@@ -174,6 +179,7 @@ class SpaceVapeApp:
 
     def populate_history_table(self):
         self.history_table.delete(*self.history_table.get_children())  # Clear the table first
+        total_profits = 0
         for entry in self.historique:
             self.history_table.insert("", "end", values=(
                 entry["timestamp"],
@@ -184,6 +190,11 @@ class SpaceVapeApp:
                 entry["liquid_cost"],
                 entry["total_profits"]
             ))
+            try:
+                total_profits += float(entry["total_profits"].split()[0])  # Extract numeric value from "X.XX DT"
+            except (ValueError, KeyError):
+                pass
+        self.total_profits_label.config(text=f"Total Profits: {total_profits:.2f} DT")
 
     def clear_history(self, filename):  
         try:  
@@ -191,7 +202,8 @@ class SpaceVapeApp:
                 os.remove(filename)  
                 self.historique = []
                 self.history_table.delete(*self.history_table.get_children())  # Clear the table display
-                messagebox.showinfo("Success", f"{filename} has been deleted.")  
+                messagebox.showinfo("Success", f"{filename} has been deleted.") 
+                 
             else:
                 messagebox.showwarning("Warning", "No history file found to delete.")
         except Exception as e:  
